@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  db_eddy:
+    image: postgres:15
+    container_name: odoo_db_eddy
+    environment:
+      POSTGRES_USER: eddy
+      POSTGRES_PASSWORD: dc321b342b199cbb6600ac5677e602ea
+      POSTGRES_DB: eddy
+    volumes:
+      - eddy_db_data:/var/lib/postgresql/data
+    networks:
+      - odoo_network
+
+  odoo_eddy:
+    image: odoo:16
+    container_name: odoo_eddy
+    depends_on:
+      - db_eddy
+    environment:
+      HOST: db_eddy
+      PORT: 5432
+      USER: eddy
+      PASSWORD: dc321b342b199cbb6600ac5677e602ea
+      PGDATABASE: eddy
+    ports:
+      - "8070:8069"  # Port dynamique - à ajuster selon le nombre d'instances
+    volumes:
+      - eddy_data:/var/lib/odoo
+      - ../../addons:/mnt/extra-addons
+    networks:
+      - odoo_network
+
+volumes:
+  eddy_db_data:
+  eddy_data:
+
+networks:
+  odoo_network:
+    external: true

@@ -1,0 +1,6 @@
+FROM odoo:16
+
+# Installer les dépendances Python nécessaires pour les modules SAAS
+USER root
+RUN pip3 install oauthlib simplejson boto pysftp rotate_backups_s3
+USER odoo
