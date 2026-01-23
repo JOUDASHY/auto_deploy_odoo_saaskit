@@ -143,3 +143,4 @@ sudo chown -R $USER:$USER addons/
 Les modules odoo-saas-tools sont sous licence LGPL-3.0 (gratuit et open source).
 # auto_deploy_odoo_saaskit
 # auto_deploy_odoo_saaskit
+# auto_deploy_odoo_saaskit
