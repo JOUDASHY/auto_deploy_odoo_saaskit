@@ -7,6 +7,7 @@ set -e
 
 INSTANCE_NAME="${1}"
 DOMAIN="${2:-${INSTANCE_NAME}.localhost}"
+PORT="${3:-8070}"
 DB_NAME="${INSTANCE_NAME}"
 DB_USER="${INSTANCE_NAME}"
 DB_PASSWORD="$(openssl rand -hex 16)"
@@ -21,6 +22,7 @@ echo "🚀 Déploiement de l'instance Odoo: ${INSTANCE_NAME}"
 echo "📋 Configuration:"
 echo "   - Nom: ${INSTANCE_NAME}"
 echo "   - Domaine: ${DOMAIN}"
+echo "   - Port: ${PORT}"
 echo "   - Base de données: ${DB_NAME}"
 echo ""
 
@@ -34,7 +36,7 @@ version: "3.8"
 
 services:
   db_${INSTANCE_NAME}:
-    image: postgres:15
+    image: postgres:16
     container_name: odoo_db_${INSTANCE_NAME}
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -46,7 +48,7 @@ services:
       - odoo_network
 
   odoo_${INSTANCE_NAME}:
-    image: odoo:16
+    image: odoo:18
     container_name: odoo_${INSTANCE_NAME}
     depends_on:
       - db_${INSTANCE_NAME}
@@ -57,7 +59,7 @@ services:
       PASSWORD: ${DB_PASSWORD}
       PGDATABASE: ${DB_NAME}
     ports:
-      - "8070:8069"  # Port dynamique - à ajuster selon le nombre d'instances
+      - "${PORT}:8069"
     volumes:
       - ${INSTANCE_NAME}_data:/var/lib/odoo
       - ../../addons:/mnt/extra-addons
@@ -120,7 +122,7 @@ echo "🔐 Informations de connexion:"
 echo "   - Base de données: ${DB_NAME}"
 echo "   - Utilisateur DB: ${DB_USER}"
 echo "   - Mot de passe DB: ${DB_PASSWORD}"
-echo "   - URL: http://localhost:8070"
+echo "   - URL: http://localhost:${PORT}"
 echo ""
 echo "📝 Accédez à l'URL pour finaliser la configuration (créer votre compte admin)"
 echo ""
