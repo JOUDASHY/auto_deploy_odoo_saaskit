@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import api from "@/lib/api";
 
 export default function Login() {
     const [username, setUsername] = useState("");
@@ -14,26 +15,30 @@ export default function Login() {
         setError("");
 
         try {
-            const res = await fetch("http://localhost:8000/api/token/", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password }),
-            });
+            const res = await api.post("/token/", { username, password });
+            const data = res.data;
 
-            const data = await res.json();
+            // Store tokens
+            localStorage.setItem("access_token", data.access);
+            localStorage.setItem("refresh_token", data.refresh);
 
-            if (res.ok) {
-                // Store tokens
-                localStorage.setItem("access_token", data.access);
-                localStorage.setItem("refresh_token", data.refresh);
+            // Fetch user info immediately after login
+            const meRes = await api.get("/me/");
+            const userData = meRes.data;
+            localStorage.setItem("user_info", JSON.stringify(userData));
 
-                // Redirect to dashboard
-                router.push("/dashboard");
+            // Redirect based on role
+            if (userData.is_staff) {
+                router.push("/admin/dashboard");
             } else {
-                setError("Identifiants invalides");
+                router.push("/dashboard");
             }
-        } catch (err) {
-            setError("Erreur de connexion");
+        } catch (err: any) {
+            if (err.response && err.response.status === 401) {
+                setError("Identifiants invalides");
+            } else {
+                setError("Erreur de connexion");
+            }
         }
     };
 
@@ -57,7 +62,7 @@ export default function Login() {
                                 required
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600"
+                                className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600"
                             />
                         </div>
                     </div>
@@ -72,7 +77,7 @@ export default function Login() {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600"
+                                className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600"
                             />
                         </div>
                     </div>
@@ -82,7 +87,7 @@ export default function Login() {
                     <div>
                         <button
                             type="submit"
-                            className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                            className="flex w-full justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-primary-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                         >
                             Se connecter
                         </button>

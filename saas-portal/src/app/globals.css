@@ -1,26 +1,48 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Palette Principale - Grenat (Greuna) */
+  --color-primary: #720e1e;
+  --color-primary-light: #a32a3b;
+  --color-primary-dark: #4a0008;
+
+  /* Palette Secondaire */
+  --color-secondary: #64748b;
+  --color-secondary-light: #94a3b8;
+
+  /* Surfaces */
+  --color-surface: #f8fafc;
+  --color-surface-border: #e2e8f0;
+
+  /* Background/Foreground tokens for v4 */
+  --color-background-base: #ffffff;
+  --color-foreground-base: #171717;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #ffffff;
+    --foreground: #171717;
+    --surface: #f8fafc;
+    --surface-border: #e2e8f0;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: #0f172a;
+      --foreground: #ededed;
+      --surface: #1e293b;
+      --surface-border: #334155;
+
+      /* Overriding primary for dark mode if needed, but per request we keep it Greuna */
+      --color-primary: #9e2a3b;
+      --color-primary-light: #c24555;
+    }
+  }
+
+  body {
+    color: var(--foreground);
+    background: var(--background);
+    font-family: Arial, Helvetica, sans-serif;
+  }
 }
