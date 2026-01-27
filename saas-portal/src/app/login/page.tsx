@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import api from "@/lib/api";
 
 export default function Login() {
@@ -93,6 +94,13 @@ export default function Login() {
                         </button>
                     </div>
                 </form>
+
+                <p className="mt-10 text-center text-sm text-gray-500">
+                    Nouveau client ?{" "}
+                    <Link href="/register" className="font-semibold leading-6 text-primary hover:text-primary-light">
+                        Créer un compte gratuitement
+                    </Link>
+                </p>
             </div>
         </div>
     );

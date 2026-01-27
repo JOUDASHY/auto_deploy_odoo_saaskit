@@ -17,6 +17,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
         fields = "__all__"
+        read_only_fields = ["client"]
 
 
 class PaymentSerializer(serializers.ModelSerializer):

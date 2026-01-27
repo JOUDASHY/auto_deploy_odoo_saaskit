@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import api from "@/lib/api";
 
 interface Subscription {
@@ -160,9 +161,9 @@ export default function ClientSubscription() {
                 ) : (
                     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-12 text-center border border-dashed border-gray-300 dark:border-gray-600">
                         <p className="text-gray-500 mb-6">Vous n'avez pas d'abonnement actif pour le moment.</p>
-                        <button className="bg-primary hover:bg-primary-dark text-white font-bold py-3 px-8 rounded-xl transition-all">
+                        <Link href="/dashboard/plans" className="inline-block bg-primary hover:bg-primary-dark text-white font-bold py-3 px-8 rounded-xl transition-all">
                             Découvrir nos offres
-                        </button>
+                        </Link>
                     </div>
                 )}
             </div>

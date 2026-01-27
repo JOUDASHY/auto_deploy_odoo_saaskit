@@ -19,6 +19,29 @@ class UserSerializer(serializers.ModelSerializer):
         return None
 
 
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    company_name = serializers.CharField(write_only=True)
+    phone = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "password", "company_name", "phone"]
+
+    def create(self, validated_data):
+        company_name = validated_data.pop("company_name")
+        phone = validated_data.pop("phone")
+        password = validated_data.pop("password")
+
+        user = User.objects.create_user(**validated_data)
+        user.set_password(password)
+        user.save()
+
+        Client.objects.create(user=user, company_name=company_name, phone=phone)
+
+        return user
+
+
 class ClientSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
 

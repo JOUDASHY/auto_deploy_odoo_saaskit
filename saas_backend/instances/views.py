@@ -50,6 +50,7 @@ class OdooInstanceViewSet(viewsets.ModelViewSet):
             port=next_port,
             db_name=instance_name,
             container_name=f"odoo_{instance_name}",
+            odoo_version=subscription.plan.odoo_version,
             status="CREATED",
         )
 
@@ -73,7 +74,7 @@ class OdooInstanceViewSet(viewsets.ModelViewSet):
             instance.save()
 
             script_path = os.path.abspath("../deploy-instance.sh")
-            cmd = [script_path, instance.name, instance.domain, str(instance.port)]
+            cmd = [script_path, instance.name, instance.domain, str(instance.port), instance.odoo_version]
             result = subprocess.run(cmd, capture_output=True, text=True)
 
             duration = (datetime.now() - start_time).total_seconds()

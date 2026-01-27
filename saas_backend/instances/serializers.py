@@ -12,12 +12,15 @@ class OdooInstanceSerializer(serializers.ModelSerializer):
         model = OdooInstance
         fields = "__all__"
         read_only_fields = [
+            "client",
+            "subscription",
             "status",
             "db_password",
             "port",
             "db_name",
             "admin_password",
             "container_name",
+            "odoo_version",
             "created_at",
             "updated_at",
         ]

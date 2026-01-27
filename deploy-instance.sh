@@ -8,6 +8,7 @@ set -e
 INSTANCE_NAME="${1}"
 DOMAIN="${2:-${INSTANCE_NAME}.localhost}"
 PORT="${3:-8070}"
+ODOO_VERSION="${4:-18}"
 DB_NAME="${INSTANCE_NAME}"
 DB_USER="${INSTANCE_NAME}"
 DB_PASSWORD="$(openssl rand -hex 16)"
@@ -48,7 +49,7 @@ services:
       - odoo_network
 
   odoo_${INSTANCE_NAME}:
-    image: odoo:18
+    image: odoo:${ODOO_VERSION}
     container_name: odoo_${INSTANCE_NAME}
     depends_on:
       - db_${INSTANCE_NAME}

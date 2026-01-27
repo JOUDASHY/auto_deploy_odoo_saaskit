@@ -1,8 +1,8 @@
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, viewsets, generics
 from rest_framework.response import Response
 
 from accounts.models import Client
-from accounts.serializers import ClientSerializer
+from accounts.serializers import ClientSerializer, RegisterSerializer
 
 
 class ClientViewSet(viewsets.ModelViewSet):
@@ -32,3 +32,6 @@ class UserMeView(viewsets.ViewSet):
             }
         )
 
+class RegisterView(generics.CreateAPIView):
+    serializer_class = RegisterSerializer
+    permission_classes = [permissions.AllowAny]

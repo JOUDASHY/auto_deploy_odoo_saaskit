@@ -27,6 +27,17 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
             return Subscription.objects.filter(client=user.client_profile)
         return Subscription.objects.none()
 
+    def perform_create(self, serializer):
+        user = self.request.user
+        if not hasattr(user, "client_profile"):
+            from rest_framework import exceptions
+            raise exceptions.PermissionDenied("User has no Client profile")
+        
+        # Suspend previous active subscriptions if any (to respect the unique constraint or business logic)
+        Subscription.objects.filter(client=user.client_profile, status="ACTIVE").update(status="SUSPENDED")
+        
+        serializer.save(client=user.client_profile, status="ACTIVE")
+
 
 class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all()

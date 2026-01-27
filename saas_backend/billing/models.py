@@ -12,6 +12,7 @@ class Plan(models.Model):
     storage_limit_gb = models.IntegerField(default=10, help_text="Maximum storage in GB")
     max_instances = models.IntegerField(default=1, help_text="Maximum number of Odoo instances allowed")
     allowed_modules = models.JSONField(default=list, help_text="List of Technical Names of allowed modules")
+    odoo_version = models.CharField(max_length=10, default="18", help_text="Version d'Odoo pour ce plan (ex: 16, 17, 18)")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(default=timezone.now)
 
