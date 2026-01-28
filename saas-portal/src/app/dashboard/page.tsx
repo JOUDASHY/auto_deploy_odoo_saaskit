@@ -58,6 +58,16 @@ export default function Dashboard() {
         }
     };
 
+    const handleAction = async (id: number, action: string) => {
+        try {
+            const endpoint = action.toLowerCase() === 'delete' ? 'remove' : action.toLowerCase();
+            await api.post(`/instances/${id}/${endpoint}/`);
+            fetchInstances();
+        } catch (err: any) {
+            alert(`Erreur: ${err.response?.data?.error || "Action échouée"}`);
+        }
+    };
+
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newInstanceName) return;
@@ -175,10 +185,34 @@ export default function Dashboard() {
                                                     </div>
                                                 </div>
                                                 <div className="flex space-x-2">
+                                                    {inst.status === 'STOPPED' || inst.status === 'ERROR' ? (
+                                                        <button
+                                                            onClick={() => handleAction(inst.id, 'START')}
+                                                            className="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
+                                                            title="Démarrer"
+                                                        >
+                                                            ▶
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleAction(inst.id, 'STOP')}
+                                                            className="p-2 text-yellow-600 hover:bg-yellow-50 rounded transition-colors"
+                                                            title="Arrêter"
+                                                        >
+                                                            ⏸
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleAction(inst.id, 'RESTART')}
+                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                        title="Redémarrer"
+                                                    >
+                                                        🔄
+                                                    </button>
                                                     <a
                                                         href={`http://localhost:${inst.port}`}
                                                         target="_blank"
-                                                        className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
+                                                        className="inline-flex items-center px-3 py-1.5 border border-primary text-primary shadow-sm text-sm font-medium rounded hover:bg-primary hover:text-white focus:outline-none transition-all"
                                                     >
                                                         Accéder ↗
                                                     </a>

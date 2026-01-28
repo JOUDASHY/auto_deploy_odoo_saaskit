@@ -3,7 +3,10 @@ import subprocess
 import threading
 from datetime import datetime
 
-from rest_framework import permissions, viewsets
+from django.utils.crypto import get_random_string
+from rest_framework import permissions, viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from instances.models import OdooInstance, DeploymentLog
 from instances.serializers import OdooInstanceSerializer, DeploymentLogSerializer
@@ -16,11 +19,86 @@ class OdooInstanceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        qs = OdooInstance.objects.none()
         if user.is_staff:
-            return OdooInstance.objects.all()
-        if hasattr(user, "client_profile"):
-            return OdooInstance.objects.filter(client=user.client_profile)
-        return OdooInstance.objects.none()
+            qs = OdooInstance.objects.all()
+        elif hasattr(user, "client_profile"):
+            qs = OdooInstance.objects.filter(client=user.client_profile)
+        
+        # Sync status for the queryset
+        self.sync_docker_status(qs)
+        return qs
+
+    def sync_docker_status(self, queryset):
+        """Check real Docker status and update DB if needed."""
+        try:
+            # Get list of running container names
+            result = subprocess.run(
+                ["docker", "ps", "--format", "{{.Names}}"],
+                capture_output=True, text=True, timeout=2
+            )
+            running_containers = result.stdout.splitlines()
+
+            for instance in queryset:
+                # We only sync instances that are supposed to be RUNNING or STOPPED
+                # (We don't touch DEPLOYING or CREATED because they are in transition)
+                if instance.status in ["RUNNING", "STOPPED", "ERROR"]:
+                    is_running = instance.container_name in running_containers
+                    new_status = "RUNNING" if is_running else "STOPPED"
+                    
+                    if instance.status != new_status:
+                        instance.status = new_status
+                        instance.save()
+        except Exception as e:
+            print(f"Error syncing docker status: {e}")
+
+    @action(detail=True, methods=["post"])
+    def start(self, request, pk=None):
+        instance = self.get_object()
+        try:
+            script_path = os.path.abspath("../manage-instances.sh")
+            subprocess.run([script_path, "start", instance.name], check=True)
+            instance.status = "RUNNING"
+            instance.save()
+            return Response({"status": "Instance started"})
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=["post"])
+    def stop(self, request, pk=None):
+        instance = self.get_object()
+        try:
+            script_path = os.path.abspath("../manage-instances.sh")
+            subprocess.run([script_path, "stop", instance.name], check=True)
+            instance.status = "STOPPED"
+            instance.save()
+            return Response({"status": "Instance stopped"})
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=["post"])
+    def restart(self, request, pk=None):
+        instance = self.get_object()
+        try:
+            script_path = os.path.abspath("../manage-instances.sh")
+            subprocess.run([script_path, "restart", instance.name], check=True)
+            instance.status = "RUNNING"
+            instance.save()
+            return Response({"status": "Instance restarted"})
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=["post"])
+    def remove(self, request, pk=None):
+        instance = self.get_object()
+        try:
+            script_path = os.path.abspath("../manage-instances.sh")
+            # In manage-instances.sh it's 'remove'
+            subprocess.run([script_path, "remove", instance.name], check=True)
+            instance.delete()
+            return Response({"status": "Instance removed"})
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -29,6 +107,7 @@ class OdooInstanceViewSet(viewsets.ModelViewSet):
             raise permissions.exceptions.PermissionDenied("User has no Client profile")
 
         client = user.client_profile
+        admin_password = get_random_string(12)
 
         # Règles métier: abonnement actif + limites de plan
         subscription = client.subscriptions.filter(status="ACTIVE").first()
@@ -50,6 +129,7 @@ class OdooInstanceViewSet(viewsets.ModelViewSet):
             port=next_port,
             db_name=instance_name,
             container_name=f"odoo_{instance_name}",
+            admin_password=admin_password,
             odoo_version=subscription.plan.odoo_version,
             status="CREATED",
         )
@@ -74,7 +154,16 @@ class OdooInstanceViewSet(viewsets.ModelViewSet):
             instance.save()
 
             script_path = os.path.abspath("../deploy-instance.sh")
-            cmd = [script_path, instance.name, instance.domain, str(instance.port), instance.odoo_version]
+            modules = ",".join(instance.subscription.plan.allowed_modules) or "base"
+            cmd = [
+                script_path, 
+                instance.name, 
+                instance.domain, 
+                str(instance.port), 
+                instance.odoo_version,
+                instance.admin_password,
+                modules
+            ]
             result = subprocess.run(cmd, capture_output=True, text=True)
 
             duration = (datetime.now() - start_time).total_seconds()

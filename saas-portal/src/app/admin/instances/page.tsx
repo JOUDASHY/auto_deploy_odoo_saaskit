@@ -52,8 +52,21 @@ export default function AdminInstances() {
         }
     };
 
-    const handleAction = (id: number, action: string) => {
-        alert(`${action} on instance ${id} - This feature requires backend implementation of specific Docker actions.`);
+    const handleAction = async (id: number, action: string) => {
+        const confirmMsg = action === 'DELETE'
+            ? "Êtes-vous sûr de vouloir supprimer cette instance ? Cette action est irréversible."
+            : `Voulez-vous vraiment ${action.toLowerCase()} cette instance ?`;
+
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const endpoint = action.toLowerCase() === 'delete' ? 'remove' : action.toLowerCase();
+            await api.post(`/instances/${id}/${endpoint}/`);
+            fetchInstances(); // Refresh list
+        } catch (e: any) {
+            console.error(`Action ${action} failed`, e);
+            alert(`Erreur lors de l'action ${action}: ${e.response?.data?.error || "Une erreur est survenue"}`);
+        }
     };
 
     const filteredInstances = instances.filter(inst =>

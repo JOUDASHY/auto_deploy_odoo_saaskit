@@ -9,6 +9,8 @@ INSTANCE_NAME="${1}"
 DOMAIN="${2:-${INSTANCE_NAME}.localhost}"
 PORT="${3:-8070}"
 ODOO_VERSION="${4:-18}"
+ADMIN_PASSWORD="${5:-admin}"
+MODULES="${6:-base}"
 DB_NAME="${INSTANCE_NAME}"
 DB_USER="${INSTANCE_NAME}"
 DB_PASSWORD="$(openssl rand -hex 16)"
@@ -39,6 +41,7 @@ services:
   db_${INSTANCE_NAME}:
     image: postgres:16
     container_name: odoo_db_${INSTANCE_NAME}
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -51,6 +54,7 @@ services:
   odoo_${INSTANCE_NAME}:
     image: odoo:${ODOO_VERSION}
     container_name: odoo_${INSTANCE_NAME}
+    restart: unless-stopped
     depends_on:
       - db_${INSTANCE_NAME}
     environment:
@@ -89,13 +93,19 @@ echo "⏳ Attente du démarrage de la base de données..."
 sleep 5
 
 # Attendre que PostgreSQL soit prêt
-echo "⏳ Initialisation de la base de données Odoo..."
+echo "⏳ Initialisation de la base de données Odoo (Modules: ${MODULES})..."
 MAX_RETRIES=30
 RETRY=0
 INIT_SUCCESS=false
 while [ ${RETRY} -lt ${MAX_RETRIES} ]; do
-    if docker exec odoo_${INSTANCE_NAME} odoo --stop-after-init -d ${DB_NAME} -r ${DB_USER} -w ${DB_PASSWORD} --db_host=db_${INSTANCE_NAME} --db_port=5432 -i base >/dev/null 2>&1; then
+    # Initialiser avec les modules spécifiés
+    if docker exec odoo_${INSTANCE_NAME} odoo --stop-after-init -d ${DB_NAME} -r ${DB_USER} -w ${DB_PASSWORD} --db_host=db_${INSTANCE_NAME} --db_port=5432 -i ${MODULES} >/dev/null 2>&1; then
         echo "✅ Base de données initialisée avec succès!"
+        
+        # Définir le mot de passe admin (ID 2 dans Odoo par défaut)
+        echo "🔐 Configuration du mot de passe administrateur..."
+        docker exec odoo_db_${INSTANCE_NAME} psql -U ${DB_USER} -d ${DB_NAME} -c "UPDATE res_users SET password='${ADMIN_PASSWORD}' WHERE id=2;" >/dev/null 2>&1
+        
         INIT_SUCCESS=true
         break
     fi

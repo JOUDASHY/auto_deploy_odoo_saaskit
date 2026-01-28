@@ -4,6 +4,7 @@ services:
   db:
     image: postgres:15
     container_name: odoo_db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: odoo
       POSTGRES_PASSWORD: odoo
@@ -16,6 +17,7 @@ services:
       context: .
       dockerfile: Dockerfile.odoo
     container_name: odoo_base
+    restart: unless-stopped
     depends_on:
       - db
     environment:

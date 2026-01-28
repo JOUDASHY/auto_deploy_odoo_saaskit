@@ -101,9 +101,11 @@ export default function ClientSubscription() {
                                     </div>
 
                                     <div className="mt-8 flex gap-4">
-                                        <button className="flex-1 bg-primary hover:bg-primary-dark text-white font-bold py-3 rounded-xl transition-colors">
-                                            Changer de Plan
-                                        </button>
+                                        <Link href="/dashboard/plans" className="flex-1">
+                                            <button className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 rounded-xl transition-colors">
+                                                Changer de Plan
+                                            </button>
+                                        </Link>
                                         <button className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-bold rounded-xl hover:bg-red-50 hover:text-red-600 transition-colors">
                                             Résilier
                                         </button>
